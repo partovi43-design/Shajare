@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>شجره‌نامه روستای برارود</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root { color-scheme: light; --line: #9aa5b1; --gap: 26px; }
+  html, body { height: 100%; margin: 0; overflow: hidden; background: #ffffff; color: #2c3e50;
+    font-family: Tahoma, Arial, sans-serif; overscroll-behavior: none; }
+  #bar { position: fixed; top: 0; left: 0; right: 0; z-index: 5; background: #ffffff;
+    padding: calc(8px + env(safe-area-inset-top, 0px)) 14px 8px; border-bottom: 1px solid #dfe4ea;
+    font-size: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+  #bar small { font-weight: normal; color: #6b7785; font-size: 12px; }
+  #view { position: absolute; inset: 0; direction: ltr; touch-action: none; background: #ffffff; overflow: hidden; cursor: grab; }
+  #stage { position: absolute; left: 0; top: 0; width: max-content; display: flex; flex-direction: column; align-items: flex-end; gap: 14px; transform-origin: 0 0; will-change: transform; padding: 8px; }
+  .item { display: flex; flex-direction: row-reverse; align-items: center; position: relative; }
+  .kids { display: flex; flex-direction: column; position: relative; margin-right: 14px; }
+  .kids::before { content: ""; position: absolute; right: -14px; top: 50%; width: 14px; border-top: 1.5px solid var(--line); }
+  .kids > .item { padding: 3px var(--gap) 3px 0; }
+  .kids > .item::before { content: ""; position: absolute; right: 0; top: 50%; width: var(--gap); border-top: 1.5px solid var(--line); }
+  .kids > .item::after { content: ""; position: absolute; right: 0; top: 0; bottom: 0; border-right: 1.5px solid var(--line); }
+  .kids > .item:first-child::after { top: 50%; }
+  .kids > .item:last-child::after { bottom: 50%; }
+  .kids > .item:only-child::after { display: none; }
+  .box { direction: rtl; display: flex; align-items: center; gap: 6px; max-width: 190px; min-height: 34px;
+    padding: 5px 10px; border-radius: 8px; border: 2px solid; font-size: 14px; line-height: 1.5;
+    text-align: right; user-select: none; -webkit-user-select: none; flex: none; cursor: default; }
+  .box.has { cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.18); }
+  .box .t { overflow-wrap: anywhere; }
+  .box .b { flex: none; min-width: 26px; height: 22px; padding: 0 6px; border-radius: 11px; background: #ffffff;
+    color: #2c3e50; font-size: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid #2c3e50; direction: ltr; }
+  .box.open .b { background: #2c3e50; color: #ffffff; }
+  .l0 { background: #ff9999; border-color: #cc0000; } .l1 { background: #99ccff; border-color: #0066cc; }
+  .l2 { background: #99ff99; border-color: #009900; } .l3 { background: #ffea99; border-color: #d6b656; }
+  .l4 { background: #ffb3b3; border-color: #e60000; } .l5 { background: #d9b3ff; border-color: #6600cc; }
+  .l6 { background: #99ffcc; border-color: #009973; }
+  .cap { direction: rtl; font-size: 15px; font-weight: bold; color: #2c3e50; padding: 4px 10px; margin-top: 24px; border-right: 4px solid #e74c3c; }
+  #ctl { position: fixed; right: 14px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 5;
+    display: flex; flex-direction: column; gap: 10px; }
+  #ctl button { width: 52px; height: 52px; border-radius: 26px; border: 2px solid #e74c3c; background: #ffffff;
+    color: #e74c3c; font-size: 26px; line-height: 1; font-family: inherit; font-weight: bold;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2); cursor: pointer; padding: 0; }
+  #ctl button:active { background: #e74c3c; color: #ffffff; }
+  #ctl button.small { font-size: 13px; }
+</style>
+</head>
+<body>
+<div id="bar"><span>شجره‌نامه روستای برارود<br><small>محقق: حسین پرتوی · ویرایش ۲ آبان ۱۴۰۵</small></span></div>
+<div id="view"><div id="stage"></div></div>
+<div id="ctl">
+  <button id="zin" aria-label="بزرگ‌نمایی">+</button>
+  <button id="zout" aria-label="کوچک‌نمایی">−</button>
+  
+  <button id="all" class="small" aria-label="باز کردن همه">همه</button>
+  <button id="none" class="small" aria-label="بستن همه">بستن</button>
+</div>
+<script>
+var DATA = {"nodes":{"X1":["قاسم آقایی داماد کربلایی علی بیک بن سلیمان",0],"X1_1":["عزیز",1],"X1_1_1":["امان الله",2],"X1_1_2":["اسدالله",2],"X1_1_3":["عین‌الله",2],"X1_1_4":["فریدون",2],"X2":["مظفر رستمی چملی داماد عزیز میرزایی",0],"X2_1":["حاتم",1],"X2_2":["تیمور",1],"X2_3":["فریدون",1],"X2_4":["حاجیگل",1],"SB":["آقا سید ابراهیم",0],"SB1":["آقا سیدجعفر داماد بالاخان",1],"SB1_1":["سید میرکمال",2],"SB1_2":["سید علی اکبر",2],"SB1_3":["سید میر باقر",2],"SB1_1_1":["سیدمیرجمال",3],"SB1_1_2":["سیداصغر",3],"SB1_2_1":["سیدهاشم",3],"SB1_2_2":["سیدجعفر یا پیلا آقا",3],"SB1_2_3":["سیداشرف",3],"SB1_2_4":["سید مهدی",3],"SB1_3_1":["سیدحسن",3],"SB1_3_2":["سیدبابا",3],"SB1_3_3":["سیدرضا",3],"SB1_3_4":["سیدحسین",3],"SB1_3_5":["سیدمیرشمس",3],"Root":["خداوردی سلطان محمودلویی",0],"P":["پروانه بیک",1],"M":["مراد بیک - ساکن لاشیدان لاهیجان",1],"Sh":["شهباز بیک - جده بره سری‌ها",1],"F":["فتحعلی خان",2],"B":["باباخان - طایفه مشهدی",2],"Vk":["والاخان / بالاخان",2],"K":["کوچک خان",2],"FJ":["فرج الله خان",2],"J":["جعفرخان / جبرخان",2],"J1":["میرزا آقا",3],"J1_1":["هادی",4],"J1_1_1":["عبدالله",5],"J1_1_1_1":["احمدخان",6],"J1_1_1_2":["محمدخان",6],"J1_2":["حسن",4],"J1_3":["قربانعلی",4],"J1_4":["صفر",4],"J1_4_1":["عیدی",5],"J2":["کاس آقا",3],"J2_1":["صفدر",4],"J2_1_1":["ربیع",5],"J2_1_2":["رحیم",5],"J3":["جده نصرالله سلامت",3],"FJ1":["ابراهیم",3],"FJ1_1":["سلطان",4],"FJ1_1_1":["جان محمد",5],"FJ1_1_2":["جواد",5],"FJ2":["کریم",3],"FJ2_1":["صادق",4],"FJ2_2":["حسن خان",4],"FJ2_2_1":["قدرت",5],"FJ2_1_1":["عزت الله",5],"FJ2_1_2":["علی گل",5],"FJ2_1_3":["عین الله",5],"FJ3":["غنی",3],"FJ4":["مردان",3],"B1":["خانعلی",3],"B1_1":["آقابابا",4],"B1_1_1":["ناصر",5],"B1_1_2":["عطار",5],"B1_1_3":["خدایار",5],"B1_1_4":["فرج الله",5],"B1_1_5":["روح الله",5],"B1_1_6":["صفی الله",5],"B1_2":["خان بابا",4],"B1_2_1":["شریف",5],"B1_2_1_1":["بابا",6],"B1_2_2":["شفیع",5],"B1_3":["سیف الله",4],"B1_3_1":["نورالله",5],"B1_4":["حیف الله",4],"B1_4_1":["خدارحیم",5],"B1_5":["فاضل",4],"B2":["تقی",3],"B2_1":["میرزاعلی",4],"B2_1_1":["کرمعلی",5],"B2_2":["قاسم",4],"B2_2_1":["نادر",5],"B2_2_2":["آقابرار",5],"B2_2_3":["میرزا",5],"B2_2_4":["هیبت",5],"B2_3":["رفیع",4],"B2_3_1":["محمد",5],"B3":["عباس میرزا",3],"B3_1":["قنبر",4],"B3_1_1":["صمد",5],"B3_1_2":["میرزاعلی",5],"B3_1_3":["فتحعلی",5],"B3_2":["امید",4],"B3_2_1":["کوچک خان",5],"B3_2_2":["آقابنده",5],"B3_2_3":["قهرمان",5],"B3_2_4":["میرزاگل",5],"B3_2_5":["میرزا",5],"B3_3":["حاجی",4],"B3_4":["حیدر",4],"Vk1":["کربلایی نجف قلی",3],"Vk1_1":["شیرمحمد",4],"Vk1_1_1":["نازعلی",5],"Vk1_1_1_1":["علی پور",6],"Vk1_1_1_2":["ایوب",6],"Vk1_1_2":["مرادعلی",5],"Vk1_1_2_1":["شیرعلی",6],"Vk1_2":["رمضان",5],"Vk1_2_1":["خسرو",6],"Vk1_2_2":["جلال",6],"Vk1_2_3":["محمد",6],"Vk1_3":["خان بابا",4],"Vk2":["کربلایی قلی",3],"Vk2_1":["احمد",4],"Vk2_1_1":["رسول",5],"Vk2_1_2":["محمد",5],"Vk2_1_3":["ولی",5],"Vk2_1_4":["حجت",5],"Vk2_2":["میرزاعبدالله",4],"Vk2_2_1":["صالح",5],"Vk2_2_1_1":["مسلم",6],"Vk2_2_1_2":["حسین قلی",6],"Vk2_3":["نبی",4],"Vk2_3_1":["علی آقا",5],"Vk2_3_1_1":["سلیمان",6],"Vk2_3_1_2":["یعقوب",6],"Vk2_3_1_3":["داود",6],"Vk3":["کربلایی برار",3],"Vk3_1":["بلال",5],"Vk3_2":["سلمان",5],"K1":["گل آقا",3],"K2":["سمیع خان",3],"K3":["موسی",3],"K4":["عیسی",3],"K4_1":["طاهر",4],"K4_2":["عیوض",4],"K5":["محمد علی",3],"K5_1":["نوروز",4],"K5_2":["روح الله",4],"K5_3":["محمد زمان",4],"K6":["کلک",3],"K7":["احمدعلی",3],"S":["سلیمان بیک",3],"A":["علی بیک",3],"V":["ولی بیک",3],"Q":["قهرمان بیک",3],"SA":["آقالی",4],"SK":["کاظم",4],"SAli":["علی",4],"SA1":["خانی",5],"SA1_1":["طالب",6],"SA2":["آقازمان",5],"SA2_1":["آقاگل / اکبر",6],"SA3":["محمد زمان",5],"SA3_1":["علی بخش",6],"SA3_2":["صدیقعلی",6],"SK1":["شیخ علی",5],"SK2":["مهر علی",5],"SK3":["بخش علی",5],"SK4":["سرمعلی",5],"SK5":["اسماعیل",5],"SAli1":["گل بابا",5],"A1":["ربیع داماد رضاخان بیک چلکاسری",4],"A2":["سمیع داماد چره ای ها",4],"A2_1":["حسن",4],"A2_1_1":["رمضان پرتوی",5],"A3":["سالار داماد کوره ای ها",4],"A4":["امین",4],"A5":["فتح الله داماد شیرکوهی ها",4],"A4_1":["عابدین",5],"A4_1_1":["علی خان",6],"A4_1_2":["اصغر",6],"A4_1_3":["گل احمد",6],"A4_1_4":["ولی",6],"V1":["رمضان",4],"V1_1":["محمد",5],"V1_1_1":["رحمت",6],"V1_1_2":["محبت",6],"V2":["باقر",4],"V2_1":["کربلایی جانی",5],"V2_1_1":["یوسف",6],"V2_1_2":["مهر علی",6],"V2_1_3":["بشیر",6],"V2_2":["کربلایی برار",4],"V2_2_1":["زلفی",5],"V2_2_1_1":["هدایت",6],"V2_2_1_2":["کوچک آقا",6],"V3":["میرزا",4],"V3_1":["نوری",5],"V3_1_1":["عزت روشن",6],"V3_2":["شعبان",5],"V3_2_1":["رضاعلی",5],"V3_2_1_1":["غلامعلی",6],"V3_2_1_2":["محرم",6],"V3_2_1_3":["شعبان",6],"V3_2_2":["نوروزعلی",5],"V3_2_2_1":["محمود",6],"V3_2_2_2":["سیف الله",6],"V3_2_2_3":["ثانی",6],"V3_2_2_4":["غفار",6],"V3_2_2_5":["عنایت",6],"V3_3":["محبعلی",5],"V3_3_1":["سلمان",6],"V3_4":["عزیز",5],"V3_4_1":["محمد حسن",6],"V4":["حسین",4],"V4_1":["گلی",5],"V4_1_1":["حاجی آقا",6],"V4_1_2":["نوروز",6],"V4_1_3":["میرزا",6],"V4_2":["درویش",5],"V4_3":["ولی",5],"V4_4":["فتح الله",5],"V5":["نصور / نصرالله",4],"V5_1":["حبیب الله",5],"V5_1_1":["پاشا",6],"V5_1_1_1":["نعمت",6],"V5_1_1_2":["همت",6],"V5_1_1_3":["ذکریا",6],"V5_2":["نعمت الله",5],"Q1":["کربلایی اصغر",4],"Q1_1":["مصطفی",5],"Q1_2":["مرتضی",5],"Q1_3":["قهرمان",5],"Q2":["کربلایی محمدی",4],"Q2_1":["یوسف",5],"Q2_2":["کاکا",5],"Q3":["آقاجان",4],"Q3_1":["اکبر",5],"Q3_1_1":["میرزا مهدی",6],"Q3_1_2":["آقامهدی",6],"Q3_1_3":["حاجی",6],"Q3_1_4":["خالو",6],"Q3_1_5":["کوچک خان",6],"Q3_2":["علی محمد",5],"Q3_2_1":["محمد علی",6],"Q3_2_2":["حمزه",6],"Q3_3":["کربلایی علی میرزا",5]},"kids":{"X1":["X1_1"],"X1_1":["X1_1_1","X1_1_2","X1_1_3","X1_1_4"],"X2":["X2_1","X2_2","X2_3","X2_4"],"SB":["SB1"],"SB1":["SB1_1","SB1_2","SB1_3"],"SB1_1":["SB1_1_1","SB1_1_2"],"SB1_2":["SB1_2_1","SB1_2_2","SB1_2_3","SB1_2_4"],"SB1_3":["SB1_3_1","SB1_3_2","SB1_3_3","SB1_3_4","SB1_3_5"],"Root":["P","M","Sh"],"P":["F","B","Vk","K","FJ","J"],"J":["J1","J2","J3"],"J1":["J1_1","J1_2","J1_3","J1_4"],"J1_1":["J1_1_1"],"J1_1_1":["J1_1_1_1","J1_1_1_2"],"J1_4":["J1_4_1"],"J2":["J2_1"],"J2_1":["J2_1_1","J2_1_2"],"FJ":["FJ1","FJ2","FJ3","FJ4"],"FJ1":["FJ1_1"],"FJ1_1":["FJ1_1_1","FJ1_1_2"],"FJ2":["FJ2_1","FJ2_2"],"FJ2_2":["FJ2_2_1"],"FJ2_1":["FJ2_1_1","FJ2_1_2","FJ2_1_3"],"B":["B1","B2","B3"],"B1":["B1_1","B1_2","B1_3","B1_4","B1_5"],"B1_1":["B1_1_1","B1_1_2","B1_1_3","B1_1_4","B1_1_5","B1_1_6"],"B1_2":["B1_2_1","B1_2_2"],"B1_2_1":["B1_2_1_1"],"B1_3":["B1_3_1"],"B1_4":["B1_4_1"],"B2":["B2_1","B2_2","B2_3"],"B2_1":["B2_1_1"],"B2_2":["B2_2_1","B2_2_2","B2_2_3","B2_2_4"],"B2_3":["B2_3_1"],"B3":["B3_1","B3_2","B3_3","B3_4"],"B3_1":["B3_1_1","B3_1_2","B3_1_3"],"B3_2":["B3_2_1","B3_2_2","B3_2_3","B3_2_4","B3_2_5"],"Vk":["Vk1","Vk2","Vk3"],"Vk1":["Vk1_1","Vk1_3"],"Vk1_1":["Vk1_1_1","Vk1_1_2","Vk1_2"],"Vk1_1_1":["Vk1_1_1_1","Vk1_1_1_2"],"Vk1_1_2":["Vk1_1_2_1"],"Vk1_2":["Vk1_2_1","Vk1_2_2","Vk1_2_3"],"Vk2":["Vk2_1","Vk2_2","Vk2_3"],"Vk2_1":["Vk2_1_1","Vk2_1_2","Vk2_1_3","Vk2_1_4"],"Vk2_2":["Vk2_2_1"],"Vk2_2_1":["Vk2_2_1_1","Vk2_2_1_2"],"Vk2_3":["Vk2_3_1"],"Vk2_3_1":["Vk2_3_1_1","Vk2_3_1_2","Vk2_3_1_3"],"Vk3":["Vk3_1","Vk3_2"],"K":["K1","K2","K3","K4","K5","K6","K7"],"K4":["K4_1","K4_2"],"K5":["K5_1","K5_2","K5_3"],"F":["S","A","V","Q"],"S":["SA","SK","SAli"],"SA":["SA1","SA2","SA3"],"SA1":["SA1_1"],"SA2":["SA2_1"],"SA3":["SA3_1","SA3_2"],"SK":["SK1","SK2","SK3","SK4","SK5"],"SAli":["SAli1"],"A":["A1","A2","A3","A4","A5"],"A2":["A2_1"],"A2_1":["A2_1_1"],"A4":["A4_1"],"A4_1":["A4_1_1","A4_1_2","A4_1_3","A4_1_4"],"V":["V1","V2","V2_2","V3","V4","V5"],"V1":["V1_1"],"V1_1":["V1_1_1","V1_1_2"],"V2":["V2_1"],"V2_1":["V2_1_1","V2_1_2","V2_1_3"],"V2_2":["V2_2_1"],"V2_2_1":["V2_2_1_1","V2_2_1_2"],"V3":["V3_1","V3_2","V3_3","V3_4"],"V3_1":["V3_1_1"],"V3_2":["V3_2_1","V3_2_2"],"V3_2_1":["V3_2_1_1","V3_2_1_2","V3_2_1_3"],"V3_2_2":["V3_2_2_1","V3_2_2_2","V3_2_2_3","V3_2_2_4","V3_2_2_5"],"V3_3":["V3_3_1"],"V3_4":["V3_4_1"],"V4":["V4_1","V4_2","V4_3","V4_4"],"V4_1":["V4_1_1","V4_1_2","V4_1_3"],"V5":["V5_1","V5_2"],"V5_1":["V5_1_1"],"V5_1_1":["V5_1_1_1","V5_1_1_2","V5_1_1_3"],"Q":["Q1","Q2","Q3"],"Q1":["Q1_1","Q1_2","Q1_3"],"Q2":["Q2_1","Q2_2"],"Q3":["Q3_1","Q3_2","Q3_3"],"Q3_1":["Q3_1_1","Q3_1_2","Q3_1_3","Q3_1_4","Q3_1_5"],"Q3_2":["Q3_2_1","Q3_2_2"]}};
+(function () {
+  var N = DATA.nodes, K = DATA.kids, ROOT = 'Root', ROOTS = ['Root', 'X1', 'X2', 'SB'];
+  var view = document.getElementById('view'), stage = document.getElementById('stage');
+  var open = { Root: true, P: true, X1: true, X2: true, SB: true, SB1: true };
+  var st = { x: 0, y: 0, k: 1 }, minK = 0.08, maxK = 3;
+  var ptrs = {}, last = null, down = null;
+
+  function digits(n) { return String(n).replace(/[0-9]/g, function (d) { return '۰۱۲۳۴۵۶۷۸۹'[d]; }); }
+  var descCache = {};
+  function desc(id) {
+    if (descCache[id] !== undefined) return descCache[id];
+    var c = K[id] || [], n = c.length;
+    for (var i = 0; i < c.length; i++) n += desc(c[i]);
+    return (descCache[id] = n);
+  }
+  function build(id) {
+    var kids = K[id] || [], has = kids.length > 0, isOpen = has && open[id];
+    var item = document.createElement('div'); item.className = 'item';
+    var box = document.createElement('div');
+    box.className = 'box l' + N[id][1] + (has ? ' has' : '') + (isOpen ? ' open' : '');
+    box.setAttribute('data-id', id);
+    var t = document.createElement('span'); t.className = 't'; t.textContent = N[id][0]; box.appendChild(t);
+    if (has) {
+      var b = document.createElement('span'); b.className = 'b';
+      b.textContent = isOpen ? '−' : '+' + digits(kids.length);
+      box.appendChild(b);
+    }
+    item.appendChild(box);
+    if (isOpen) {
+      var wrap = document.createElement('div'); wrap.className = 'kids';
+      for (var i = 0; i < kids.length; i++) wrap.appendChild(build(kids[i]));
+      item.appendChild(wrap);
+    }
+    return item;
+  }
+  function render() {
+    stage.innerHTML = '';
+    for (var i = 0; i < ROOTS.length; i++) {
+      if (ROOTS[i] === 'SB') {
+        var cap = document.createElement('div');
+        cap.className = 'cap';
+        cap.textContent = 'شجره‌نامه سادات برارود';
+        stage.appendChild(cap);
+      }
+      var tr = build(ROOTS[i]); if (i > 0 && ROOTS[i] !== 'SB') tr.style.marginTop = '22px'; stage.appendChild(tr);
+    }
+  }
+  function apply() { stage.style.transform = 'translate(' + st.x + 'px,' + st.y + 'px) scale(' + st.k + ')'; }
+  function clampK(k) { return Math.min(maxK, Math.max(minK, k)); }
+  function zoomAt(cx, cy, nk) {
+    nk = clampK(nk); var r = nk / st.k;
+    st.x = cx - (cx - st.x) * r; st.y = cy - (cy - st.y) * r; st.k = nk; apply();
+  }
+  function fit() {
+    var w = stage.offsetWidth, h = stage.offsetHeight, vw = view.clientWidth, vh = view.clientHeight - 60;
+    var k = clampK(Math.min(1, vw / w, vh / h));
+    st.k = k; st.x = vw - w * k; st.y = 60 + Math.max(0, (vh - h * k) / 2); apply();
+  }
+  function toggle(id) {
+    if (!(K[id] && K[id].length)) return;
+    var before = stage.querySelector('[data-id="' + id + '"]').getBoundingClientRect();
+    open[id] = !open[id];
+    render();
+    var after = stage.querySelector('[data-id="' + id + '"]').getBoundingClientRect();
+    st.x += before.left - after.left; st.y += before.top - after.top; apply();
+  }
+  function setAll(v) {
+    open = {};
+    if (v) { for (var id in K) open[id] = true; } else { open.Root = true; open.SB = true; open.X1 = true; open.X2 = true; }
+    render(); fit();
+  }
+
+  function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+  function mid(a, b) { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
+  function pts() { return Object.keys(ptrs).map(function (i) { return ptrs[i]; }); }
+
+  view.addEventListener('pointerdown', function (e) {
+    var box = e.target.closest ? e.target.closest('.box') : null;
+    if (!Object.keys(ptrs).length) down = { id: box ? box.getAttribute('data-id') : null, x: e.clientX, y: e.clientY, moved: false };
+    else if (down) down.moved = true;
+    view.setPointerCapture(e.pointerId);
+    ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+    var p = pts();
+    last = p.length === 2 ? { d: dist(p[0], p[1]), c: mid(p[0], p[1]) } : { c: p[0] };
+  });
+  view.addEventListener('pointermove', function (e) {
+    if (!ptrs[e.pointerId]) return;
+    ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+    if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) down.moved = true;
+    var p = pts();
+    if (p.length >= 2) {
+      var d = dist(p[0], p[1]), c = mid(p[0], p[1]);
+      if (last && last.d) { st.x += c.x - last.c.x; st.y += c.y - last.c.y; zoomAt(c.x, c.y, st.k * d / last.d); }
+      last = { d: d, c: c };
+    } else if (last && last.c && down && down.moved) {
+      st.x += p[0].x - last.c.x; st.y += p[0].y - last.c.y; apply(); last = { c: p[0] };
+    }
+  });
+  function up(e) {
+    var wasOne = Object.keys(ptrs).length === 1;
+    delete ptrs[e.pointerId];
+    var p = pts();
+    last = p.length === 1 ? { c: p[0] } : null;
+    if (wasOne && down && !down.moved && down.id && e.type === 'pointerup') toggle(down.id);
+    if (!p.length) down = null;
+  }
+  view.addEventListener('pointerup', up);
+  view.addEventListener('pointercancel', up);
+  view.addEventListener('wheel', function (e) {
+    e.preventDefault(); zoomAt(e.clientX, e.clientY, st.k * (e.deltaY < 0 ? 1.15 : 1 / 1.15));
+  }, { passive: false });
+
+  function center() { return { x: view.clientWidth / 2, y: view.clientHeight / 2 }; }
+  document.getElementById('zin').onclick = function () { var c = center(); zoomAt(c.x, c.y, st.k * 1.4); };
+  document.getElementById('zout').onclick = function () { var c = center(); zoomAt(c.x, c.y, st.k / 1.4); };
+  
+  document.getElementById('all').onclick = function () { setAll(true); };
+  document.getElementById('none').onclick = function () { setAll(false); };
+
+  render(); fit();
+})();
+</script>
+</body>
+</html>
